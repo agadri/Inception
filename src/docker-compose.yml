@@ -1,0 +1,58 @@
+version: '3.3'
+
+networks:
+  database:
+  web:
+
+services:
+  mariadb:
+    container_name: mariadb
+    build: ./requirements/mariadb
+    env_file:
+      - .env
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - database
+    restart: unless-stopped
+
+  wordpress:
+    container_name: wordpress
+    build: ./requirements/wordpress
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+    volumes:
+      - wp:/var/www/wordpress
+    networks:
+      - web
+      - database
+    restart: unless-stopped
+
+  nginx:
+    container_name: nginx
+    build: ./requirements/nginx
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+    volumes:
+      - wp:/var/www/wordpress
+    networks:
+      - web
+    restart: unless-stopped
+
+volumes :
+  db:
+    driver: local
+    driver_opts:
+      type: none
+      o: "bind"
+      device: "/home/adegadri/data/mariadb"
+  wp:
+    driver: local
+    driver_opts:
+      type: none
+      o: "bind"
+      device: "/home/adegadri/data/wordpress"
